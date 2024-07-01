@@ -5,12 +5,13 @@ s = Pluto.ServerSession()
 # s.options.server.disable_writing_notebook_files = true
 s.options.server.launch_browser = false
 
-@info "PlutoPages: Starting..."
+@info "PlutoPages: Generating site..."
 nb = Pluto.SessionActions.open(s, joinpath(@__DIR__, "PlutoPages.jl"); run_async=false)
 @info "PlutoPages: Finished. Analyzing result..."
 
 write("generation_report.html", Pluto.generate_html(nb))
 
+# checking if a cell in PlutoPages.jl failed. (This does not check for errors in the notebooks that make up the website.)
 failed = filter(c -> c.errored, nb.cells)
 
 for c in failed
