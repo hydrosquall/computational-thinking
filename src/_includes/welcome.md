@@ -4,6 +4,18 @@ layout: "layout.jlhtml"
 
 <link rel="stylesheet" href="$(root_url)/assets/styles/homepage.css" type="text/css" />
 
+<div style="
+    background: white;
+    padding: 0.3em 1em;
+    border: 3px solid #b97777;
+    box-shadow: 0px 0px 10px #00000036;
+    z-index: 99999999;
+    position: relative;
+    font-size: 1.3rem;
+">
+    <p><strong>MIT students:</strong> Sign up for the Fall 2024 edition of this class!</p><p>Register for <strong><code>18C25</code></strong>, <strong><code>6C25</code></strong>, etc: <br><em>"Julia: Solving Real-World Problems with Computation"</em></p>
+</div>
+
 <div id="title" class="banner">
     <h1>Julia: <strong>A Fresh Approach to Computing</strong></h1>
 </div>
