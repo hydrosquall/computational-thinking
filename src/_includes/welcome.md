@@ -13,7 +13,11 @@ layout: "layout.jlhtml"
     position: relative;
     font-size: 1.3rem;
 ">
-    <p><strong>MIT students:</strong> Sign up for the Fall 2024 edition of this class!</p><p>Register for <strong><code>18C25</code></strong>, <strong><code>6C25</code></strong>, etc: <br><em>"Julia: Solving Real-World Problems with Computation"</em></p>
+    <p><strong>MIT students:</strong> Sign up for the Fall 2024 edition of this class!</p><p>Register for <strong><code>18C25</code></strong>, <strong><code>6C25</code></strong>, etc: <br><em>"Julia: Solving Real-World Problems with Computation"</em> (<a href="https://student.mit.edu/catalog/search.cgi?search=computation+with+Julia&amp;style=verbatim&amp;when=C&amp;termleng=4&amp;days_offered=*&amp;start_time=*&amp;duration=*&amp;total_units=*" class="" style="
+    color: #6c6cca;
+    font-weight: bold;
+    text-decoration: underline;
+">catalog link</a>)</p>
 <p style="
     opacity: .7;
 ">Counts for course 6 and course 18 majors, etc.</p><p></p></div>
