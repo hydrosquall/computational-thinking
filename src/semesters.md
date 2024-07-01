@@ -5,10 +5,11 @@ order: 8
 layout: "md.jlmd"
 ---
 
-# This is the _Fall 2023_ edition
+# This is the _Fall 2024_ edition
 
 For previous versions of this class, see:
 
+-   [Fall 2023](https://computationalthinking.mit.edu/Fall23/)
 -   [Fall 2022](https://computationalthinking.mit.edu/Fall22/)
 -   [Spring 2021](https://computationalthinking.mit.edu/Spring21/)
 -   [Fall 2020](https://computationalthinking.mit.edu/Fall20/)
