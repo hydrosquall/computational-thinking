@@ -59,10 +59,10 @@ jobs:
             - name: 🔀 Combine semesters into single site
               run: |
                 mkdir www
-                mv Fall22-output/Fall20/ www/Fall20
-                mv Fall22-output/Spring21/ www/Spring21
-                mv Fall22-output/Fall22/ www/Fall22
-                mv Fall22-output/Fall23/ www/Fall23
+                mv Fall23-output/Fall20/ www/Fall20
+                mv Fall23-output/Spring21/ www/Spring21
+                mv Fall23-output/Fall22/ www/Fall22
+                mv Fall23-output/Fall23/ www/Fall23
                 mv _site www/Fall24
                 mv extra_outputs/* www
 
