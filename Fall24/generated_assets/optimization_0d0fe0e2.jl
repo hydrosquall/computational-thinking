@@ -11,7 +11,7 @@
 #> layout = "layout.jlhtml"
 #> youtube_id = "44RA9fclTdA"
 #> description = "We use Optim.jl and JuMP.jl to optimize a function: automatically finding the input that maximizes output."
-#> tags = ["lecture", "module2", "track_juli", "track_climate", "track_data", "track_math", "optimization"]
+#> tags = ["lecture", "module2", "track_julia", "track_climate", "track_data", "track_math", "optimization"]
 
 using Markdown
 using InteractiveUtils
