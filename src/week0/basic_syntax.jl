@@ -1,6 +1,12 @@
 ### A Pluto.jl notebook ###
 # v0.19.45
 
+#> [frontmatter]
+#> title = "Julia syntax basics"
+#> layout = "layout.jlhtml"
+#> description = ""
+#> tags = ["lecture", "track_julia", "track_climate", "track_data", "track_math"]
+
 using Markdown
 using InteractiveUtils
 
