@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.25
+# v0.19.45
 
 #> [frontmatter]
 #> chapter = 3
@@ -36,6 +36,7 @@ begin
         Pkg.PackageSpec(name="Plots", version="1"),
         Pkg.PackageSpec(name="ClimateMARGO", version=v"0.3.2"),
         Pkg.PackageSpec(name="PlutoUI", version="0.7"),
+        Pkg.PackageSpec(name="AbstractPlutoDingetjes"),
         Pkg.PackageSpec(name="HypertextLiteral", version="0.9"),
 		Pkg.PackageSpec(name="Underscores", version="2"),
     ])
@@ -47,6 +48,7 @@ begin
 	using ClimateMARGO.Optimization
 	using ClimateMARGO.Diagnostics
 	using PlutoUI
+	using AbstractPlutoDingetjes
     using HypertextLiteral
 	using Underscores
 	
@@ -865,7 +867,7 @@ function plotclicktracker2(p::Plots.Plot, initial::Dict; draggable::Bool=true)
 		const names = $(names_js)
 		
 
-		const body = $(PlutoRunner.publish_to_js(plot_render))
+		const body = $(AbstractPlutoDingetjes.Display.published_to_js(plot_render))
 		const mime = "image/svg+xml"
 
 		

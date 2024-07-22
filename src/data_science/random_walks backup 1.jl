@@ -2,16 +2,16 @@
 # v0.19.45
 
 #> [frontmatter]
-#> chapter = 3
-#> video = "https://www.youtube.com/watch?v=3Y5gVyO8KcI"
-#> image = "https://user-images.githubusercontent.com/6933510/136199718-ff811eb3-aad6-4d6b-99e0-f6bf922816b4.png"
-#> section = 1
-#> order = 1
-#> title = "Time stepping"
+#> chapter = 2
+#> video = "https://www.youtube.com/watch?v=14hHtGJ4s-g"
+#> image = "https://user-images.githubusercontent.com/6933510/136196563-f4b5b44c-5252-4e67-8c82-c550de891c55.png"
+#> section = 5
+#> order = 5
+#> title = "Random Walks"
 #> layout = "layout.jlhtml"
-#> youtube_id = "3Y5gVyO8KcI"
+#> youtube_id = "14hHtGJ4s-g"
 #> description = ""
-#> tags = ["lecture", "module3", "epidemiology", "track_math", "track_climate", "plotting", "continuous", "discrete", "ODE", "differential equation", "modeling"]
+#> tags = ["lecture", "module2", "programming", "track_julia", "plotting", "structure", "type", "interactive", "random", "statistics", "track_math", "track_data"]
 
 using Markdown
 using InteractiveUtils
@@ -26,498 +26,427 @@ macro bind(def, element)
     end
 end
 
-# ╔═╡ 9a0cec14-08db-11eb-3cfa-4d1c327c63f1
-using Plots, PlutoUI, StatsBase, Statistics
+# ╔═╡ 97e807b2-9237-11eb-31ef-6fe0d4cc94d3
+using Plots, PlutoUI, BenchmarkTools
 
-# ╔═╡ fb6cdc08-8b44-11eb-09f5-43c167aa53fd
-PlutoUI.TableOfContents()
+# ╔═╡ 5f0d7a44-91e0-11eb-10ae-d73156f965e6
+TableOfContents(aside=true)
 
-# ╔═╡ 6f871ac0-716d-4bf8-a067-c798869c103f
+# ╔═╡ 9647147a-91ab-11eb-066f-9bc190368fb2
 md"""
-# Modeling component failure: Discrete and continuous
+# Julia concepts
+
+- Benchmarking: BenchmarkTools.jl
+- Plotting in a loop
+- Generic programming
+- Mutable vs immutable structs
+- Vectors of vectors
+- Aliasing of memory 
+- `cumsum`
 """
 
-# ╔═╡ ae243395-521b-4834-b61e-19501e54b41c
+# ╔═╡ ff1aca1e-91e7-11eb-343e-0f89d9570b06
 md"""
-Let's think about a simple model for failure of components such as light bulbs. 
-(We actually derived this global, or macroscopic, model from a microscopic stochastic model a few lectures ago.)
-	
-Components can fail at any moment but we'll start off by checking once per day to count the number that have failed during that day. Then we'll check several times per day. This is still a **discrete** model. Finally we'll see how we can turn this into a **continuous** model where we can talk about the number that have failed by any real time $t$.
+# Motivation: Dynamics of hard discs
 """
 
-# ╔═╡ 8d2858a4-8c38-11eb-0b3b-61a913eed928
+# ╔═╡ 66a2f510-9232-11eb-3be9-131febc0039f
 md"""
-## Checking failures once per day (integer time steps)
+Brown observed **Brownian motion** in 1827: Large particles like sand or pollen in water move around seemingly at random. Einstein explained this in 1905 as repeated impacts with water molecules.
+
+We can visualise that with a simulation of hard discs bouncing off one another. Even though the dynamics is not random -- each disc follows Newton's laws -- if we just look at a single one of them it *looks* random.
 """
 
-# ╔═╡ e93c5f2f-d7c8-41ea-bdbb-7cf6587b6266
+# ╔═╡ bd3170e6-91ae-11eb-06f8-ebb6b2e7869f
 md"""
-
-
-Let's call $N_k$ the (average) number of bulbs that are still functioning on day number $k$, starting from an initial number $N_0$.
-
-We can find an equation for the number $N_{k+1}$ that are still functioning at the end of day number $k+1$ by working out how many *fail* on day $k+1$. 
-
-Let's call $p$ the probability that each bulb fails each day. For example, if 10% of the bulbs fail each day then $p = 0.1$.
-
-If there are 100 bulbs and 10% fail on the first day, then 10 fail, so there will be 90 remaining. In general, if a proportion $p$ of the $N_k$ fail, in total we expect $p \, N_k$ to fail.
-
-Hence
-
-$$N_{k+1} = N_k - p \, N_k$$
-
-or
-
-$$N_{k+1} - N_k = - p N_k.$$
-
-In this very simple model we can actually solve this recurrence relation analytically to find the number still functioning at time $t$:
-
-$$N_{k+1} = (1 - p) N_k$$
-
-so
-
-$$N_k = (1 - p) N_{k-1} = (1 - p)^2 N_{k-2} = \cdots$$
-
-hence
-
-$$N_k = N_0 \, (1 - p)^k.$$
-
+## Visualising random walks
 """
 
-# ╔═╡ 43f5ac88-7d07-429c-b27f-49908c30bdf9
+# ╔═╡ a304c842-91df-11eb-3fac-6dd63087f6de
 md"""
-## Checking failures $n$ times per day
+A **random walk** models random motion in time and space. At each time step an object moves in a random direction.
+
+Let's visualise the result in 2 dimensions.
 """
 
-# ╔═╡ b70465ab-9c7c-4533-9539-b414ef54a892
+# ╔═╡ 798507d6-91db-11eb-2e4a-3ba02f12ba65
 md"""
-Now suppose instead we ask how many light bulbs fail in *half* a day. If 10% fail per day, it's natural to think that 5% fail in half a day. 
-
-However, this is not quite right due to the effect of **compounding** (as in compound interest). If 5% fail and then 5% of the remainder fail, then how many are left?
-
-
-
+N = $(@bind N Slider(1:6, show_value=true, default=1))
 """
 
-# ╔═╡ 80c1a728-1784-4bb7-b2c3-e77b41929a78
-(1 - 0.05) * (1 - 0.05)
-
-# ╔═╡ a25cb8e6-f65d-4061-b90c-079814458c94
+# ╔═╡ 3504168a-91de-11eb-181d-1d580d5dc071
 md"""
-So slightly *fewer* than 10% in total have failed, due to the effect of compounding. Nonetheless, the result is approximately right, so let's take that.
+t = $(@bind t Slider(1:10^N, show_value=true, default=1))
 """
 
-# ╔═╡ 4cc483e5-c322-44c8-83f1-802b6cb432aa
+# ╔═╡ b62c4af8-9232-11eb-2f66-dd27dcb87d20
 md"""
-So let's suppose that $n$ times a day, a proportion $p / n$ fail (for example, 10% and twice a day gives 5% failing each time, approximately).
-
-Then the number remaining after the first failure check on day $k$ is
+We see that the dynamics closely resembles, at least qualitatively, that of the hard disc.
 """
 
-# ╔═╡ 3ce501b4-76bc-49ab-b3b8-a41f29dbcc2b
+# ╔═╡ 905379ce-91ad-11eb-295d-8354ecf5c5b1
 md"""
-$N_{k + \frac{1}{n}} = \textstyle (1 - \frac{p}{n}) N_k$
+# Why use random walks?
 
-Here we have used a subscript since we are in a discrete situation. We could also have written instead
+#### Why should we model with random processes?
 
-$$N(k + \textstyle \frac{1}{n}).$$
+- Either we need to get a lot of data to precisely characterise a system, or we assume it's random
 
-The solution at the next day is
+- It may well be that *can* have all the details, but by making a simplifying assumption we actually gain more *understanding*.
 
-$$N_{k+1} = N_k \, (1 - \textstyle \frac{p}{n})^n.$$
 
-And the full solution for the number remaining after $k$ days is
+#### Examples:
 
-$N_k = N_0 \, \textstyle (1 - \frac{p}{n})^{nk}$
-"""
 
-# ╔═╡ c539e622-d76d-489a-abb9-4ba47dfe9b90
-md"""
-Let's plot these to see what they look like:
-"""
+- Stock price going up and down
 
-# ╔═╡ 95fe38c5-d717-47d0-8db7-5f8d53a6c6f1
-md"""
-n = $(n_slider = @bind n Slider(0:8, show_value=true))
-"""
 
-# ╔═╡ 2982c418-dad5-44cc-8194-5b607af84b16
-p = 0.4
+- Pollutants getting dispersed in the air
 
-# ╔═╡ c97964d1-b5d2-4ee7-80cc-995b3f344aa1
-let
-	N0 = 100
-	T = 20
-	
-	N = [N0 * (1 - p)^t for t in 0:T]
-	
-	plot(0:T, N, m=:o, alpha=0.5, ms=3, label="once daily", lw=2)
-	
-# 	N2 = [N0 * (1 - p5/2)^(t) for t in 0:2T]
-# 	plot!(0:0.5:T, N2, m=:o, alpha=0.5, ms=2, label="twice a day")
-	
-# 	N4 = [N0 * (1 - p5/4)^(t) for t in 0:4T]
-# 	plot!(0:0.25:T, N4, m=:o, alpha=0.5, ms=2, label="four times a day")
-	
-	N = [N0 * (1 - p/(2^n))^(t) for t in 0:(2^n)*T]
-	plot!(0:(2.0^(-n)):T, N, m=:o, alpha=0.5, ms=2, label="$(2^n) times per day")
-	
-	xlabel!("days (k)")
-	ylabel!("N_k")
-	
-	title!("$(2^n) times per day")
-	
-	
-	# plot!(t -> N0 * exp(-p5 * t))
-end
 
-# ╔═╡ ba121b40-2bfc-42d4-81ee-5f90e18ec8de
-md"""
-## Continuous time 
-"""
-
-# ╔═╡ 74892ec6-6639-469d-8711-5039a140d833
-md"""
-Thinking back to the class on "discrete to continuous", we see that we are producing more and more discrete values to keep track of, but after a while the curve they trace out does not really change. It thus makes sense to define a **limiting object**, which is what would happen if you could take smaller and smaller time steps in the right way, i.e. take the limit as $n \to \infty$. 
-
-In that case we could imagine being able to calculate the (average) number $N(t)$
-of bulbs that are functioning at time $t$, where $t$ can be *any* positive real number.
+- Neutral genes moving through a population
 
 
 """
 
-# ╔═╡ fc6899d3-ea18-487a-add1-20be86ce9c74
+# ╔═╡ 5c4f0f26-91ad-11eb-033b-2bd221f0bdba
 md"""
-In calculus we learn ways to see that
+# Simple random walk
+
+The simplest version is called **simple random walk**: one object jumps on the integers: at each time step it jumps left or right. 
+
+Each such step is a new random variable, taking values $\pm 1$ at each step, each with probability $1/2$ (in the simplest case). 
+We can think of this as a scaling of a Bernoulli random variable.
+
+In order to simulate this, we need to know how to generate the jumps.
 """
 
-# ╔═╡ 75a60bcf-3f77-49fb-a7ee-db4580aae6f3
+# ╔═╡ da98b676-91e0-11eb-0d97-57b8a8aadf2a
 md"""
-$(1 - p/n)^n$ converges to $\exp(-p)$ as $n \to \infty$.
+## Julia: Benchmarking
 """
 
-# ╔═╡ 786beb46-d175-44b3-a63e-057150e53c66
+# ╔═╡ e0b607c0-91e0-11eb-10aa-53ec33570e59
 md"""
-An alternative approach is to look at the time evolution in terms of *differences*. In a time $1/n$ a proportion $p/n$ decays. Here we are thinking of $\delta t = 1/n$ as the **time step** between consecutive checks. If there are $N(t)$ bulbs functioning at a time $t$ and we take a small time  step of general length $\delta t$, a proportion $p \, \delta t$ should fail, so that
+There are various ways we could generate random values $\pm 1$. Let's use this as an opportunity to learn about **benchmarking** in Julia, i.e. measuring run time to compare performance. In this case we will do "micro-benchmarks", which try to compare tiny pieces of code which we intend to run many millions of times, so that small differences in run time can be significant.
+
+The `BenchmarkTools.jl` package provides relatively easy-to-use tools for measuring this, by running the code many times and calculating statistics. The `@btime` macro is a simple way to estimate actual running time. Each option should be enclosed in a function.
 """
 
-# ╔═╡ 2d9f3aad-1d41-4918-a128-47dc58b667e3
+# ╔═╡ fa1635d4-91e3-11eb-31bd-cf61c502ad35
 md"""
-$N(t + \delta t) - N(t) = -(p \, \delta t) \, N(t).$
+Here are a few different ways we could generate random steps:
 """
 
-# ╔═╡ 17a23094-3975-49f4-8c7f-03fbc8afbbf2
-md"""
-Dividing through by $\delta t$ we find
-"""
-
-# ╔═╡ eaf6f4eb-b367-492e-a1be-81f9455252c4
-md"""
-$$\frac{N(t + \delta t) - N(t)}{\delta t} = -p \, N(t).$$
-
-"""
-
-# ╔═╡ 51c226b9-ab3d-46b4-a963-3548ad715d85
-md"""
-We now recognise the left-hand side of the equation: if we take the limit as $\delta t \to 0$, we have exactly the definition of  the **derivative** $\frac{dN(t)}{dt}$.
-
-Hence, taking that limit we obtain
-"""
-
-# ╔═╡ 6c527098-ab53-4862-bda6-0c11b1564a11
-md"""
-$$\frac{dN(t)}{dt} = - p \, N(t)$$
-
-with $N(0) = N_0$, the initial number.
-
-This is an **ordinary differential equation**: it is an equation relating the value of the function $N(t)$ at time $t$ to the derivative (slope) of that function at that point. This relationship must hold for all $t$. It is not obvious that this equation even makes sense (although it should do, given the way we have derived it), but in differential equations courses we see that it does make sense (under some technical conditions), and uniquely specifies a function satisfying the ODE together with the initial condition. (This is called an "initial-value problem".)
-"""
-
-# ╔═╡ 3c2b2f03-522c-40a0-ac1d-8054fe8e3fa2
-md"""
-In this particular case, once again we are lucky enough to be able to solve this equation analytically:  $N(t)$ is a function whose derivative is a multiple of the same function, and hence it must be exponential:
-"""
-
-# ╔═╡ 5cec433e-ee71-44b5-b5d6-3feab80fa535
-md"""
-$N(t) = N_0 \exp(-p \, t)$
-"""
-
-# ╔═╡ 96b02ce7-ce16-4276-a147-ba94d7a2e160
-md"""
-This is an alternative way to define the exponential function. We can add this to the above plot:
-"""
-
-# ╔═╡ d952db33-1f82-42f5-96af-8038c256715b
-n_slider
-
-# ╔═╡ 2b9276dc-fcca-4469-a62c-028a9eb3c2a9
-let
-	N0 = 100
-	T = 20
-	
-	N = [N0 * (1 - p)^t for t in 0:T]
-	
-	plot(0:T, N, m=:o, alpha=0.5, ms=3, label="once daily", lw=2)
-	
-# 	N2 = [N0 * (1 - p5/2)^(t) for t in 0:2T]
-# 	plot!(0:0.5:T, N2, m=:o, alpha=0.5, ms=2, label="twice a day")
-	
-# 	N4 = [N0 * (1 - p5/4)^(t) for t in 0:4T]
-# 	plot!(0:0.25:T, N4, m=:o, alpha=0.5, ms=2, label="four times a day")
-	
-	N = [N0 * (1 - p/(2^n))^(t) for t in 0:(2^n)*T]
-	plot!(0:(2.0^(-n)):T, N, m=:o, alpha=0.5, ms=2, label="$(2^n) times per day")
-	
-	xlabel!("days (k)")
-	ylabel!("N_k")
-	
-	title!("$(2^n) times per day")
-	
-	
-	plot!(t -> N0 * exp(-p * t), label="continuous", lw=2)
-end
-
-# ╔═╡ 754fe8c1-7021-48e8-9523-d5b22d0af93f
-md"""
-We see graphically that this is indeed the correct limiting curve.
-"""
-
-# ╔═╡ ccb35ad7-db20-46fa-abff-a6e88ef999e0
-md"""
-In this context, $p$ is called a **rate**; it is a *probability per unit time*, i.e. a ratio of probability and time. (To get the probability of decaying in a time $\delta t$, we *multiplied* $p$ by $\delta t$.)
-"""
-
-# ╔═╡ d03d9bfc-20ea-49bc-bc7b-df22cc240ffe
-md"""
-Let's summarise what we have found:
-"""
-
-# ╔═╡ dde3ffc7-b333-4305-b8e7-9888e4512c41
-md"""
-| Step type   | Time stepping     |  Difference    |   Solution  |
-| ----------- | :-----------: | :-----------:  | :-----------: |
-| Integer            | $N_{k+1} = (1 - p) N_k$  |  $N_{k+1} - N_k = -p N_k$  | $N_k = N_0 (1 - p)^k$
-| Rational |  $N_{k + \frac{1}{n}} = \textstyle (1 - \frac{p}{n}) N_k$ | $N_{k + \frac{1}{n}} - N_k = \textstyle (- \frac{p}{n}) N_k$   | $N_k = N_0 (1 - \frac{p}{n})^{n k}$ 
-| Continuous   | $N(t + \delta t) = (1 - p \, \delta t) N(t)$         |  $\frac{dN(t)}{dt} = - p \, N(t)$  |  $N(t) = N_0 \exp(-p \, t)$
-
-"""
-
-# ╔═╡ d74bace6-08f4-11eb-2a6b-891e52952f57
-md"""
-# SIR model
-"""
-
-# ╔═╡ 76268535-e232-4e02-97cd-cf9b3ddec256
-md"""
-
-Let's look at a more complicated example, the **SIR** model of the spread of an epidemic, or of a rumour, in a population. You are surely familiar with models of this type modelling the spread of COVID-19, and from the homework.
-
-As in the homework, we can make a fully discrete, stochastic agent-based model, where we give microscopic rules specifying how individual agents interact with one another. When we run such models with large enough systems, we observe that the results are often quite smooth. An alternative approach is to try to write down macroscopic discrete equations that describe the dynamics of averages. 
-
-Often it is easier to understand the behaviour of such systems by formulating a continuous version of the model. Some people make discrete models because they're not happy with continuous models; large discrete models can also be computationally wasteful. On the other hand, they can also include effects that might be more difficult to model in a continuous framework, e.g. non-local effects or things that "don't become continuous very well". 
-"""
-
-# ╔═╡ 11e24e1d-39db-4b7e-96db-50458def72af
-md"""
-## Discrete-time SIR model
-"""
-
-# ╔═╡ dbdf2812-08f4-11eb-25e7-811522b24627
-md"""
-First let's think about the SI model: agents can be susceptible (S) and infectious (I). A susceptible person becomes infectious when they come into contact with an infectious person, with some probability.
-"""
-
-# ╔═╡ 238f0716-0903-11eb-1595-df71600f5de7
-md"""
-Let's call $S_t$ and $I_t$ be the number of susceptible and infectious people at time $t$, respectively, and let's call $N$ the total number of people.
-
-Let's suppose that at each time step, each infectious person has the chance to interact with one other person (on average). That person will be chosen at random from the total population of size $N$. A new infection occurs only if that chosen person is susceptible, which happens with probability $S_t / N$, and only if the infection attempt is successful, with probability $b$, say.
-
-Hence the change in the number of infectious people after that step is
-"""
-
-# ╔═╡ 8e771c8a-0903-11eb-1e34-39de4f45412b
-md"""
-$$\Delta I_t = I_{t+1} - I_t = b \, I_t \, \left(\frac{S_t}{N} \right)$$
-"""
-
-# ╔═╡ fb52c62d-15d3-46a2-8e3d-2de20c68ded4
-md"""
-The decrease in $S_t$ is also given by $\Delta I_t$.
-"""
-
-# ╔═╡ e83fc5b8-0904-11eb-096b-8da3a1acba12
-md"""
-There is also recovery, with a constant probability $c$ at each step, once you are infectious.
-
-It is useful to normalize by $N$, so we define the proportions of the population that are susceptible, infectious and recovered as
-
-$$s_t := \frac{S_t}{N}; \quad i_t := \frac{I_t}{N}; \quad r_t := \frac{R_t}{N}.$$
-"""
-
-# ╔═╡ d1fbea7a-0904-11eb-377d-690d7a16aa7b
-md"""
-Including recovery with probability $c$ we obtain the **discrete-time SIR model**:
-"""
-
-# ╔═╡ dba896a4-0904-11eb-3c47-cbbf6c01e830
-md"""
-$$\begin{align}
-s_{t+1} &= s_t - b \, s_t \, i_t \\
-i_{t+1} &= i_t + b \, s_t \, i_t - c \, i_t\\
-r_{t+1} &= r_t + c \, i_t
-\end{align}$$
-"""
-
-# ╔═╡ cea2dcfb-b1eb-4269-81d7-8596969e9bd6
-md"""
-## Continuous-time SIR model
-"""
-
-# ╔═╡ 08d166f1-3af0-45a8-bcad-6ee958497453
-md"""
-We can now go through the same process as with the failure model, where we take time steps of length $\delta t$ instead, and replace probabilities $b$ and $c$ with *rates* $\beta$ and $\gamma$. Taking the limit $\delta t \to 0$ we get
-"""
-
-# ╔═╡ 72061c66-090d-11eb-14c0-df619958e2b6
-md"""
-$$\begin{align}
-\frac{ds(t)}{dt} &= -\beta \, s(t) \, i(t) \\
-\frac{di(t)}{dt} &= +\beta \, s(t) \, i(t) &- \gamma \, i(t)\\
-\frac{dr(t)}{dt} &= &+ \gamma \, i(t)
-\end{align}$$
-"""
-
-# ╔═╡ c07367be-0987-11eb-0680-0bebd894e1be
-md"""
-We can think of this as a model of a chemical reaction with species S, I and R. The term $s(t) i(t)$ is known as the [**mass action**](https://en.wikipedia.org/wiki/Law_of_mass_action) form of interaction.
-
-Note that no analytical solutions of these (simple) nonlinear ODEs are known as a function of time! (However, [parametric solutions are known](https://arxiv.org/abs/1403.2160).)
-"""
-
-# ╔═╡ f8a28ba0-0915-11eb-12d1-336f291e1d84
-md"""
-Below is an example simulation of the discrete-time model. 
-"""
-
-# ╔═╡ d994e972-090d-11eb-1b77-6d5ddb5daeab
+# ╔═╡ f7f9e4c6-91e3-11eb-1a56-8b98f0b09b46
 begin
-	NN = 100
+	step1() = rand( (-1, +1) )
 	
-	SS = NN - 1
-	II = 1
-	RR = 0
+	step2() = 2 * (rand() < 0.5) - 1
+	
+	step3() = 2 * rand(Bool) - 1
+	
+	step4() = sign(randn())
 end
 
-# ╔═╡ 050bffbc-0915-11eb-2925-ad11b3f67030
-ss, ii, rr = SS/NN, II/NN, RR/NN
+# ╔═╡ 5da7b076-91b4-11eb-3eba-b3f5849efabb
+with_terminal() do
+	@btime step1()
+	@btime step2()
+	@btime step3()
+	@btime step4()
+end
 
-# ╔═╡ 1d0baf98-0915-11eb-2f1e-8176d14c06ad
-p_infection, p_recovery = 0.1, 0.01
+# ╔═╡ ea9e77e2-91b1-11eb-185d-cd006db11f60
+md"""
+## Trajectory of a random walk
+"""
 
-# ╔═╡ 28e1ec24-0915-11eb-228c-4daf9abe189b
-TT = 1000
+# ╔═╡ 12b4d528-9239-11eb-2824-8ddb5e2ba892
+md"""
+We can now calculate the **trajectory** of a 1D random walk as it takes several steps.
+It starts at an initial position, for example, 0, and takes consecutive steps:
+"""
 
-# ╔═╡ 349eb1b6-0915-11eb-36e3-1b9459c38a95
-function discrete_SIR(s0, i0, r0, T=1000)
-
-	s, i, r = s0, i0, r0
+# ╔═╡ 2f525796-9239-11eb-1865-9b01eadcf548
+function walk1D(N)
+	x = 0
+	xs = [x]
 	
-	results = [(s=s, i=i, r=r)]
-	
-	for t in 1:T
-
-		Δi = p_infection * s * i
-		Δr = p_recovery * i
-		
-		s_new = s - Δi
-		i_new = i + Δi - Δr
-		r_new = r      + Δr
-
-		push!(results, (s=s_new, i=i_new, r=r_new))
-
-		s, i, r = s_new, i_new, r_new
+	for i in 1:N
+		x += step1()
+		push!(xs, x)
 	end
 	
-	return results
+	return xs
 end
 
-# ╔═╡ 39c24ef0-0915-11eb-1a0e-c56f7dd01235
-SIR = discrete_SIR(ss, ii, rr)
-
-# ╔═╡ 442035a6-0915-11eb-21de-e11cf950f230
+# ╔═╡ 51abfe6e-9239-11eb-362a-259570250663
 begin
-	ts = 1:length(SIR)
-	discrete_time_SIR_plot = plot(ts, [x.s for x in SIR], 
-		m=:o, label="S", alpha=0.2, linecolor=:blue, leg=:right, size=(400, 300))
-	plot!(ts, [x.i for x in SIR], m=:o, label="I", alpha=0.2)
-	plot!(ts, [x.r for x in SIR], m=:o, label="R", alpha=0.2)
+	plot()
 	
-	xlims!(0, 500)
+	for i in 1:10
+		plot!(walk1D(100), leg=false, size=(500, 300), lw=2, alpha=0.5)
+	end
+	
+	plot!()
 end
 
-# ╔═╡ 5f5d7332-b5f8-4d05-971b-ec0564f1339b
+# ╔═╡ b847b5ca-9239-11eb-02fe-db4d9625bc5f
 md"""
-# Time stepping: The Euler method
+# Making it more general: Random walks using types
 """
 
-# ╔═╡ 7cf51986-5983-4094-a18f-f95f2f6993da
+# ╔═╡ c2deb090-9239-11eb-0739-a74379c15ce6
 md"""
-Above we showed how we can think of Ordinary Differential Equations (ODEs) as arising in a natural way from discrete-time models where we take time steps.
-
-What about if somebody gives us an ODE -- how should we solve it numerically?
-
-In fact, we do the reverse process: We **discretize** the equation and reduce it to a system where we take time steps!
-
-Suppose the differential equation is
-
-$$\dot{x} = f(x)$$
-
-The simplest such method is the **Euler method**: we approximate the derivative using a small (but not *too* small) time step $h$ (what we called $\delta t$ above):
-
-$$\dot{x} \simeq \frac{x(t + h) - x(t)}{h}$$
-
-giving
-
-$$x(t + \delta t) \simeq x(t) + h \, f(x).$$ 
-
-The Euler method with constant time step is then the following algorithm:
-
-$$x_{k+1} = x_k + h \, f(x_k)$$
-
-If we have several variables in our ODE, we can wrap the variables up into a vector and use the *same* method: for the ODE
-
-$$\dot{\mathbf{x}} = \mathbf{f}(\mathbf{x})$$
-
-the Euler method becomes
-
-$$\mathbf{x}_{k+1} = \mathbf{x}_k + h \, \mathbf{f}(\mathbf{x}_k),$$
-
-where $\mathbf{f}$ denotes is a vector-valued function mapping the vector of variables to the vector of right-hand sides of the ODEs.
-
-
+Now suppose we want to think about more general random walks, for example moving around in 2D. Then we need to *generalise* the above function.
+		
+Based on our experience from last time, you should suspect that a good way to do this is with *types*. We will define 
 """
 
-# ╔═╡ 763bbb15-c52e-4159-99b7-f3d17f47d56a
-md"""
-However, in general the Euler method is *not* a good algorithm to simulate the dynamics of an ODE! We can see why that might be from the graphs at the start of this notebook: taking time steps like this actually does a *bad* job at approximating the continuous curve. Numerical analysis courses show how to design better numerical methods to approximate the true solution of an ODE more accurately.
+# ╔═╡ d420d492-91d9-11eb-056d-33cc8f0aed74
+abstract type Walker end
 
-The Julia [SciML / DifferentialEquations.jl](https://diffeq.sciml.ai/stable/tutorials/ode_example/) ecosystem provides a large suite of methods for solving ODEs and many other types of differential equations using state-of-the-art methods.
+# ╔═╡ ad2d4dd8-91d5-11eb-27af-6f0c6e61a86a
+struct Walker1D <: Walker
+	pos::Int
+end
+
+# ╔═╡ d0f81f28-91d9-11eb-2e79-61461ef5b132
+position(w::Walker) = w.pos
+
+# ╔═╡ b8f2c508-91d5-11eb-31b5-61810f171270
+step(w::Walker1D) = rand( (-1, +1) )
+
+# ╔═╡ 23b84ce2-91da-11eb-01f8-c308ac4d1c7a
+struct Walker2D <: Walker
+	x::Int
+	y::Int
+end
+
+# ╔═╡ 537f952a-91da-11eb-33cf-6be2fd3bc45c
+position(w::Walker2D) = (w.x, w.y)
+
+# ╔═╡ 3c3971e2-91da-11eb-384c-01c627318bdc
+update(w::W, step) where {W <: Walker} = W(position(w) + step)
+
+# ╔═╡ 5b972296-91da-11eb-29b1-074f3926181e
+step(w::Walker2D) = rand( [ [1, 0], [0, 1], [-1, 0], [0, -1] ] )
+
+# ╔═╡ 3ad5a93c-91db-11eb-3227-c96bf8fd2206
+update(w::Walker2D, step::Vector) = Walker2D(w.x + step[1], w.y + step[2])
+
+# ╔═╡ cb0ef266-91d5-11eb-314b-0545c0c817d0
+function trajectory(w::W, N) where {W}   # W is a type parameter
+	ws = [position(w)]
+
+	for i in 1:N
+		pos = position(w)
+		w = update(w, step(w))
+		
+		push!(ws, position(w))
+	end
+	
+	return ws
+end
+
+# ╔═╡ 048fac02-91da-11eb-0d26-4f258b4cd043
+trajectory(Walker1D(0), 10)
+
+# ╔═╡ 74182fe0-91da-11eb-219a-01f13b86406d
+traj = trajectory(Walker2D(0, 0), 10^N)
+
+# ╔═╡ 4c8d8294-91db-11eb-353d-c3696c615b3d
+begin
+	plot(traj[1:t], ratio=1, leg=false, alpha=0.5, lw=2)
+	scatter!([ traj[1], traj[t] ], c=[:red, :green])
+	
+	xlims!(minimum(first.(traj)) - 1, maximum(first.(traj)) + 1)
+	ylims!(minimum(last.(traj)) - 1, maximum(last.(traj)) + 1)
+	
+end
+
+# ╔═╡ 57972a32-91e5-11eb-1d62-fbc22c494db9
+md"""
+## Random walks as sum of random variables
 """
+
+# ╔═╡ 63122dd0-91e5-11eb-34c3-b1b5c87809b8
+md"""
+We can connect up with the discussion from last lecture about the sum of random variables: The position $S_n$ of a random walk at time $n$ is a random variable that is the sum of $n$ random variables (which are often independent and id
+
+$$S_n = X_1 + \cdots + X_n$$
+
+where $X_i$ is the random variable modelling the $i$th step of the walk.
+
+Often each $X_i$ will be independent random variables of the same type, in which case we talk about an **independent and identically distributed** (IID) collection.
+
+In principle we could use the method from last lecture to model this, but there is a difficulty since we are interested in all intermediate steps: The values $S_{n-1}$ and $S_n$, for example, are *not* independent (even though the $X_i$ are). For example, if $S_{n-1}$ is large, then $S_n$ is also about as large, so they are highly correlated.
+"""
+
+# ╔═╡ bd013582-91e7-11eb-2d79-e18e45f6d639
+md"""
+## Cumulative sum
+"""
+
+# ╔═╡ c092ab72-91e7-11eb-2bd1-13c8c8bb30e4
+md"""
+Suppose we generate steps $X_i$, e.g.
+"""
+
+# ╔═╡ cfb0f9ba-91e7-11eb-26b5-5f0f59d03cff
+steps = rand( (-1, +1), 10 )
+
+# ╔═╡ d6edb326-91e7-11eb-03b1-d93e3bc83ca6
+md"""
+The trajectory, or sample path, of the random walk, is the collection of positions over time. These are the **partial sums**
+
+$$\begin{align}
+S_1 & = X_1 \\
+S_2 &= X_1 + X_2 \\
+S_3 &= X_1 + X_2 + X_3
+\end{align}$$
+
+etc.
+"""
+
+# ╔═╡ 4ef42cec-91e8-11eb-2976-0950ffe5de6c
+md"""
+We can calculate all of these values using the `cumsum` ("cumulative sum", also called "prefix sum" or "scan") function:
+"""
+
+# ╔═╡ ace8658e-91e8-11eb-0b9d-4b759635e417
+cumsum(steps)
+
+# ╔═╡ b049ff58-91e8-11eb-203b-4f4b5ee5f01f
+md"""
+Let's plot this:
+"""
+
+# ╔═╡ b6775d3a-91e8-11eb-0187-618cb538d142
+plot(cumsum(steps), m=:o, leg=false, size=(500, 300))
+
+# ╔═╡ 8b1441b6-91e4-11eb-16b2-d7eadd3fd69c
+md"""
+# Trajectories vs evolving probability distributions
+"""
+
+# ╔═╡ d1315f94-91e4-11eb-1076-81156e24d2f1
+md"""
+So far we have looked at single trajectories of random walks. We can think of this as the equivalent of sampling using `rand`. Suppose that we were to (conceptually) run millions or billions of trajectories of our random walk. At each *time* step, we can ask for the probability distribution in *space*, averaged over all those walks. 
+Note that we now have *two* variables. We could do this by literally running many walks and computing histograms. Instead we can look at how probabilities move around.
+
+Let's call $p_i^t$ the probability of being at site $i$ at time $t$. We can then ask what the probability of being at site $i$ at time $t+1$. It must have been in one of the neighbouring sites at time $t$, so
+
+$$p_i^{t+1} = \textstyle \frac{1}{2} (p_{i-1}^{t} + p_{i+1}^{t}).$$
+
+This is sometimes called the **master equation** (even though that is rather a useless, non-descriptive name). It describes how the probability distribution 
+"""
+
+# ╔═╡ 97c958c2-91eb-11eb-17cb-410acc7f3e49
+md"""
+At time $t$ we have a whole probability distribution, which we can think of as a vector $\mathbf{p}^t$.
+
+Let's write a function to **evolve** the vector to the next time step.
+"""
+
+# ╔═╡ b7a98dba-91eb-11eb-3c78-074aa835b5fb
+function evolve(p)
+	p′ = similar(p)   # make a vector of the same length and type
+	                  # to store the probability vector at the next time step
+	
+	for i in 2:length(p)-1
+		p′[i] = 0.5 * (p[i-1] + p[i+1])
+	end
+	
+	p′[1] = 0
+	p′[end] = 0
+	
+	return p′
+	
+end
+
+# ╔═╡ f7f17c0c-91eb-11eb-3fa5-3bd90bb7044e
+md"""
+Wait... Do you recognise this?
+
+We have seen this before! This is just a **convolution**, like the blurring kernel from image processing (except that in our particular model `p[i]` itself does not contribute to the value of `new_p[i]`.)
+"""
+
+# ╔═╡ f0aed302-91eb-11eb-13fb-d9418ef327a8
+md"""
+Note that just as we did with images, we have a problem at the edges of the system. We need to specify **boundary conditions**. For now we have put 0s at the boundary. This corresponds to probability *escaping* at the boundary: any probability that arrives at the boundary (i.e. the first or last cell) at a given time step does not stay in the system. We can think of the probability as analogous to a chemical that disappears 
+"""
+
+# ╔═╡ c1062e00-922b-11eb-1f31-ddbd03f8f986
+md"""
+We also need to specify an *initial* condition $\mathbf{p}_0$. This tells us where our walker is at time $0$. Suppose that all walkers start at $0$. We will place this in the middle of our vector. Then the probability at that location is 1, while the probability elsewhere is 0:
+"""
+
+# ╔═╡ 547188ea-9233-11eb-1a89-5ff9468b31f7
+function initial_condition(n)
+	
+	p0 = zeros(n)
+	p0[n ÷ 2 + 1] = 1
+	
+	return p0
+end
+
+# ╔═╡ 2920abfe-91ec-11eb-19bc-935fa1ba0a96
+md"""
+Now let's try and visualise the time evolution.
+"""
+
+# ╔═╡ 3fadf88c-9236-11eb-19fa-d191ac5a6191
+function time_evolution(p0, N)
+	ps = [p0]
+	p = p0
+	
+	for i in 1:N
+		p = evolve(p)
+		push!(ps, copy(p))
+	end
+	
+	return ps
+end
+
+# ╔═╡ 58653a70-9236-11eb-3dae-47adc2a77cb4
+p0 = initial_condition(101)
+
+# ╔═╡ 5d02f21e-9236-11eb-26ea-6593aa80a2eb
+ps = time_evolution(p0, 100)
+
+# ╔═╡ 863caf0a-9236-11eb-1013-ab7d83f3fc0c
+ps[2]
+
+# ╔═╡ b803406e-9236-11eb-3aad-056b7f2c9b4b
+md"""
+t = $(@bind tt Slider(1:length(ps), show_value=true, default=1))
+"""
+
+# ╔═╡ cc7aaeea-9236-11eb-3fad-2b5ad3962ec1
+plot(ps[tt], ylim=(0, 1), leg=false, size=(500, 300))
+
+# ╔═╡ dabb5766-9236-11eb-3be9-9b33ba5af68a
+ps[tt]
+
+# ╔═╡ 6cde6ef4-9236-11eb-219a-4d20adaf9988
+M = reduce(hcat, ps)'
+
+# ╔═╡ 7e8c1a2a-9236-11eb-20e9-57f6601f5472
+heatmap(M, yflip=true)
 
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
+BenchmarkTools = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
-Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
-StatsBase = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
 
 [compat]
-Plots = "~1.40.5"
+BenchmarkTools = "~1.3.1"
+Plots = "~1.29.1"
 PlutoUI = "~0.7.48"
-StatsBase = "~0.34.3"
 """
 
 # ╔═╡ 00000000-0000-0000-0000-000000000002
@@ -526,7 +455,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.10.4"
 manifest_format = "2.0"
-project_hash = "a372a98b69b602a12e8140b8cf62648aac331555"
+project_hash = "7f7f421624990bcbfe26a0a6a938b5b21ea8e293"
 
 [[deps.AbstractPlutoDingetjes]]
 deps = ["Pkg"]
@@ -544,10 +473,11 @@ uuid = "56f22d72-fd6d-98f1-02f0-08ddc0907c33"
 [[deps.Base64]]
 uuid = "2a0f44e3-6c83-55bd-87e4-b1978d98bd5f"
 
-[[deps.BitFlags]]
-git-tree-sha1 = "0691e34b3bb8be9307330f88d1a3c3f25466c24d"
-uuid = "d1d4a3ce-64b1-5f1a-9ba4-7e7e69966f35"
-version = "0.1.9"
+[[deps.BenchmarkTools]]
+deps = ["JSON", "Logging", "Printf", "Profile", "Statistics", "UUIDs"]
+git-tree-sha1 = "d9a9701b899b30332bbcb3e1679c41cce81fb0e8"
+uuid = "6e4b80f9-dd63-53aa-95a3-0cdb28fa8baf"
+version = "1.3.2"
 
 [[deps.Bzip2_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -561,17 +491,11 @@ git-tree-sha1 = "a2f1c8c668c8e3cb4cca4e57a8efdb09067bb3fd"
 uuid = "83423d85-b0ee-5818-9007-b63ccbeb887a"
 version = "1.18.0+2"
 
-[[deps.CodecZlib]]
-deps = ["TranscodingStreams", "Zlib_jll"]
-git-tree-sha1 = "b8fe8546d52ca154ac556809e10c75e6e7430ac8"
-uuid = "944b1d66-785c-5afd-91f1-9de20f533193"
-version = "0.7.5"
-
 [[deps.ColorSchemes]]
 deps = ["ColorTypes", "ColorVectorSpace", "Colors", "FixedPointNumbers", "PrecompileTools", "Random"]
-git-tree-sha1 = "b5278586822443594ff615963b0c09755771b3e0"
+git-tree-sha1 = "4b270d6465eb21ae89b732182c20dc165f8bf9f2"
 uuid = "35d6a980-a343-548e-a6ea-1d62b119f2f4"
-version = "3.26.0"
+version = "3.25.0"
 
 [[deps.ColorTypes]]
 deps = ["FixedPointNumbers", "Random"]
@@ -612,16 +536,25 @@ deps = ["Artifacts", "Libdl"]
 uuid = "e66e0078-7015-5450-92f7-15fbd957f2ae"
 version = "1.1.1+0"
 
-[[deps.ConcurrentUtilities]]
-deps = ["Serialization", "Sockets"]
-git-tree-sha1 = "ea32b83ca4fefa1768dc84e504cc0a94fb1ab8d1"
-uuid = "f0e56b4a-5159-44fe-b623-3e5288b988bb"
-version = "2.4.2"
+[[deps.ConstructionBase]]
+deps = ["LinearAlgebra"]
+git-tree-sha1 = "260fd2400ed2dab602a7c15cf10c1933c59930a2"
+uuid = "187b0558-2788-49d3-abe0-74a17ed4e7c9"
+version = "1.5.5"
+
+    [deps.ConstructionBase.extensions]
+    ConstructionBaseIntervalSetsExt = "IntervalSets"
+    ConstructionBaseStaticArraysExt = "StaticArrays"
+
+    [deps.ConstructionBase.weakdeps]
+    IntervalSets = "8197267c-284f-5f27-9208-e0e47529a953"
+    StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [[deps.Contour]]
-git-tree-sha1 = "439e35b0b36e2e5881738abc8857bd92ad6ff9a8"
+deps = ["StaticArrays"]
+git-tree-sha1 = "9f02045d934dc030edad45944ea80dbd1f0ebea7"
 uuid = "d38c429a-6771-53c6-b99e-75d170b6e991"
-version = "0.6.3"
+version = "0.5.7"
 
 [[deps.DataAPI]]
 git-tree-sha1 = "abe83f3a2f1b857aac70ef8b269080af17764bbe"
@@ -633,6 +566,11 @@ deps = ["Compat", "InteractiveUtils", "OrderedCollections"]
 git-tree-sha1 = "1d0a14036acb104d9e89698bd408f63ab58cdc82"
 uuid = "864edb3b-99cc-5e75-8d2d-829cb0a9cfe8"
 version = "0.18.20"
+
+[[deps.DataValueInterfaces]]
+git-tree-sha1 = "bfc1187b79289637fa0ef6d4436ebdfe6905cbd6"
+uuid = "e2d170a0-9d28-54be-80f0-106bbe20a464"
+version = "1.0.0"
 
 [[deps.Dates]]
 deps = ["Printf"]
@@ -655,23 +593,28 @@ deps = ["ArgTools", "FileWatching", "LibCURL", "NetworkOptions"]
 uuid = "f43a241f-c20a-4ad4-852c-f6b1247861c6"
 version = "1.6.0"
 
+[[deps.EarCut_jll]]
+deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
+git-tree-sha1 = "e3290f2d49e661fbd94046d7e3726ffcb2d41053"
+uuid = "5ae413db-bbd1-5e63-b57d-d24a61df00f5"
+version = "2.2.4+0"
+
 [[deps.EpollShim_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
 git-tree-sha1 = "8e9441ee83492030ace98f9789a654a6d0b1f643"
 uuid = "2702e6a9-849d-5ed8-8c21-79e8b8f9ee43"
 version = "0.0.20230411+0"
 
-[[deps.ExceptionUnwrapping]]
-deps = ["Test"]
-git-tree-sha1 = "dcb08a0d93ec0b1cdc4af184b26b591e9695423a"
-uuid = "460bff9d-24e4-43bc-9d9f-a8973cb893f4"
-version = "0.1.10"
-
 [[deps.Expat_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
 git-tree-sha1 = "1c6317308b9dc757616f0b5cb379db10494443a7"
 uuid = "2e619515-83b5-522b-bb60-26c02a35a201"
 version = "2.6.2+0"
+
+[[deps.Extents]]
+git-tree-sha1 = "94997910aca72897524d2237c41eb852153b0f65"
+uuid = "411431e0-e8b7-467b-b5e0-f676ba4f2910"
+version = "0.1.3"
 
 [[deps.FFMPEG]]
 deps = ["FFMPEG_jll"]
@@ -680,10 +623,10 @@ uuid = "c87230d0-a227-11e9-1b43-d7ebe4e7570a"
 version = "0.4.1"
 
 [[deps.FFMPEG_jll]]
-deps = ["Artifacts", "Bzip2_jll", "FreeType2_jll", "FriBidi_jll", "JLLWrappers", "LAME_jll", "Libdl", "Ogg_jll", "OpenSSL_jll", "Opus_jll", "PCRE2_jll", "Zlib_jll", "libaom_jll", "libass_jll", "libfdk_aac_jll", "libvorbis_jll", "x264_jll", "x265_jll"]
-git-tree-sha1 = "466d45dc38e15794ec7d5d63ec03d776a9aff36e"
+deps = ["Artifacts", "Bzip2_jll", "FreeType2_jll", "FriBidi_jll", "JLLWrappers", "LAME_jll", "Libdl", "Ogg_jll", "OpenSSL_jll", "Opus_jll", "PCRE2_jll", "Pkg", "Zlib_jll", "libaom_jll", "libass_jll", "libfdk_aac_jll", "libvorbis_jll", "x264_jll", "x265_jll"]
+git-tree-sha1 = "74faea50c1d007c85837327f6775bea60b5492dd"
 uuid = "b22a6f82-2f65-5046-a5b2-351ab43fb4e5"
-version = "4.4.4+1"
+version = "4.4.2+2"
 
 [[deps.FileWatching]]
 uuid = "7b1f6079-737a-58dc-b8bc-7a2ca5c1b5ee"
@@ -700,10 +643,11 @@ git-tree-sha1 = "db16beca600632c95fc8aca29890d83788dd8b23"
 uuid = "a3f928ae-7b40-5064-980b-68af3947d34b"
 version = "2.13.96+0"
 
-[[deps.Format]]
-git-tree-sha1 = "9c68794ef81b08086aeb32eeaf33531668d5f5fc"
-uuid = "1fa38f19-a742-5d3f-a2b9-30dd87b9d5f8"
-version = "1.3.7"
+[[deps.Formatting]]
+deps = ["Logging", "Printf"]
+git-tree-sha1 = "fb409abab2caf118986fc597ba84b50cbaf00b87"
+uuid = "59287772-0a20-5a39-b81b-1366585eb4c0"
+version = "0.4.3"
 
 [[deps.FreeType2_jll]]
 deps = ["Artifacts", "Bzip2_jll", "JLLWrappers", "Libdl", "Zlib_jll"]
@@ -724,16 +668,28 @@ uuid = "0656b61e-2033-5cc2-a64a-77c0f6c09b89"
 version = "3.4.0+0"
 
 [[deps.GR]]
-deps = ["Artifacts", "Base64", "DelimitedFiles", "Downloads", "GR_jll", "HTTP", "JSON", "Libdl", "LinearAlgebra", "Preferences", "Printf", "Random", "Serialization", "Sockets", "TOML", "Tar", "Test", "p7zip_jll"]
-git-tree-sha1 = "3e527447a45901ea392fe12120783ad6ec222803"
+deps = ["Base64", "DelimitedFiles", "GR_jll", "HTTP", "JSON", "Libdl", "LinearAlgebra", "Pkg", "Printf", "Random", "RelocatableFolders", "Serialization", "Sockets", "Test", "UUIDs"]
+git-tree-sha1 = "c98aea696662d09e215ef7cda5296024a9646c75"
 uuid = "28b8d3ca-fb5f-59d9-8090-bfdbd6d07a71"
-version = "0.73.6"
+version = "0.64.4"
 
 [[deps.GR_jll]]
-deps = ["Artifacts", "Bzip2_jll", "Cairo_jll", "FFMPEG_jll", "Fontconfig_jll", "FreeType2_jll", "GLFW_jll", "JLLWrappers", "JpegTurbo_jll", "Libdl", "Libtiff_jll", "Pixman_jll", "Qt6Base_jll", "Zlib_jll", "libpng_jll"]
-git-tree-sha1 = "182c478a179b267dd7a741b6f8f4c3e0803795d6"
+deps = ["Artifacts", "Bzip2_jll", "Cairo_jll", "FFMPEG_jll", "Fontconfig_jll", "GLFW_jll", "JLLWrappers", "JpegTurbo_jll", "Libdl", "Libtiff_jll", "Pixman_jll", "Pkg", "Qt5Base_jll", "Zlib_jll", "libpng_jll"]
+git-tree-sha1 = "bc9f7725571ddb4ab2c4bc74fa397c1c5ad08943"
 uuid = "d2c73de3-f751-5644-a686-071e5b155ba9"
-version = "0.73.6+0"
+version = "0.69.1+0"
+
+[[deps.GeoInterface]]
+deps = ["Extents"]
+git-tree-sha1 = "9fff8990361d5127b770e3454488360443019bb3"
+uuid = "cf35fbd7-0cd7-5166-be24-54bfbe79505f"
+version = "1.3.5"
+
+[[deps.GeometryBasics]]
+deps = ["EarCut_jll", "Extents", "GeoInterface", "IterTools", "LinearAlgebra", "StaticArrays", "StructArrays", "Tables"]
+git-tree-sha1 = "b62f2b2d76cee0d61a2ef2b3118cd2a3215d3134"
+uuid = "5c1252a2-5f33-56bf-86c9-59e7332b4326"
+version = "0.4.11"
 
 [[deps.Gettext_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "Libdl", "Libiconv_jll", "Pkg", "XML2_jll"]
@@ -759,10 +715,10 @@ uuid = "42e2da0e-8278-4e71-bc24-59509adca0fe"
 version = "1.0.2"
 
 [[deps.HTTP]]
-deps = ["Base64", "CodecZlib", "ConcurrentUtilities", "Dates", "ExceptionUnwrapping", "Logging", "LoggingExtras", "MbedTLS", "NetworkOptions", "OpenSSL", "Random", "SimpleBufferStream", "Sockets", "URIs", "UUIDs"]
-git-tree-sha1 = "d1d712be3164d61d1fb98e7ce9bcbc6cc06b45ed"
+deps = ["Base64", "Dates", "IniFile", "Logging", "MbedTLS", "NetworkOptions", "Sockets", "URIs"]
+git-tree-sha1 = "0fa77022fe4b511826b39c894c90daf5fce3334a"
 uuid = "cd3eb016-35fb-5094-929b-558a96fad6f3"
-version = "1.10.8"
+version = "0.9.17"
 
 [[deps.HarfBuzz_jll]]
 deps = ["Artifacts", "Cairo_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "Graphite2_jll", "JLLWrappers", "Libdl", "Libffi_jll", "Pkg"]
@@ -788,6 +744,11 @@ git-tree-sha1 = "b6d6bfdd7ce25b0f9b2f6b3dd56b2673a66c8770"
 uuid = "b5f81e59-6552-4d32-b1f0-c071b021bf89"
 version = "0.2.5"
 
+[[deps.IniFile]]
+git-tree-sha1 = "f550e6e32074c939295eb5ea6de31849ac2c9625"
+uuid = "83e8ac13-25f8-5344-8a64-a9f2b223428f"
+version = "0.5.1"
+
 [[deps.InteractiveUtils]]
 deps = ["Markdown"]
 uuid = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
@@ -797,11 +758,15 @@ git-tree-sha1 = "630b497eafcc20001bba38a4651b327dcfc491d2"
 uuid = "92d709cd-6900-40b7-9082-c6be49f344b6"
 version = "0.2.2"
 
-[[deps.JLFzf]]
-deps = ["Pipe", "REPL", "Random", "fzf_jll"]
-git-tree-sha1 = "a53ebe394b71470c7f97c2e7e170d51df21b17af"
-uuid = "1019f520-868f-41f5-a6de-eb00f4b6a39c"
-version = "0.1.7"
+[[deps.IterTools]]
+git-tree-sha1 = "42d5f897009e7ff2cf88db414a389e5ed1bdd023"
+uuid = "c8e1da08-722c-5040-9ed9-7db0dc04731e"
+version = "1.10.0"
+
+[[deps.IteratorInterfaceExtensions]]
+git-tree-sha1 = "a3f24677c21f5bbe9d2a714f95dcd58337fb2856"
+uuid = "82899510-4779-5014-852e-03e436cf321d"
+version = "1.0.0"
 
 [[deps.JLLWrappers]]
 deps = ["Artifacts", "Preferences"]
@@ -851,17 +816,21 @@ uuid = "b964fa9f-0449-5b57-a5c2-d3ea65f4040f"
 version = "1.3.1"
 
 [[deps.Latexify]]
-deps = ["Format", "InteractiveUtils", "LaTeXStrings", "MacroTools", "Markdown", "OrderedCollections", "Requires"]
-git-tree-sha1 = "5b0d630f3020b82c0775a51d05895852f8506f50"
+deps = ["Formatting", "InteractiveUtils", "LaTeXStrings", "MacroTools", "Markdown", "OrderedCollections", "Printf", "Requires"]
+git-tree-sha1 = "8c57307b5d9bb3be1ff2da469063628631d4d51e"
 uuid = "23fbe1c1-3f47-55db-b15f-69d7ec21a316"
-version = "0.16.4"
+version = "0.15.21"
 
     [deps.Latexify.extensions]
     DataFramesExt = "DataFrames"
+    DiffEqBiologicalExt = "DiffEqBiological"
+    ParameterizedFunctionsExt = "DiffEqBase"
     SymEngineExt = "SymEngine"
 
     [deps.Latexify.weakdeps]
     DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+    DiffEqBase = "2b5f629d-d688-5b77-993f-72d75c75574e"
+    DiffEqBiological = "eb300fae-53e8-50a0-950c-e21f52c2b7e0"
     SymEngine = "123dc426-2d89-5057-bbad-38513e3affd8"
 
 [[deps.LibCURL]]
@@ -928,10 +897,10 @@ uuid = "4b2f31a3-9ecc-558c-b454-b3730dcb73e9"
 version = "2.40.1+0"
 
 [[deps.Libtiff_jll]]
-deps = ["Artifacts", "JLLWrappers", "JpegTurbo_jll", "LERC_jll", "Libdl", "XZ_jll", "Zlib_jll", "Zstd_jll"]
-git-tree-sha1 = "2da088d113af58221c52828a80378e16be7d037a"
+deps = ["Artifacts", "JLLWrappers", "JpegTurbo_jll", "LERC_jll", "Libdl", "Pkg", "Zlib_jll", "Zstd_jll"]
+git-tree-sha1 = "3eb79b0ca5764d4799c06699573fd8f533259713"
 uuid = "89763e89-9b03-5906-acba-b20f662cd828"
-version = "4.5.1+1"
+version = "4.4.0+0"
 
 [[deps.Libuuid_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
@@ -961,12 +930,6 @@ version = "0.3.28"
 
 [[deps.Logging]]
 uuid = "56ddb016-857b-54e1-b83d-db4d58db5568"
-
-[[deps.LoggingExtras]]
-deps = ["Dates", "Logging"]
-git-tree-sha1 = "c1dd6d7978c12545b4179fb6153b9250c96b0075"
-uuid = "e6f89c97-d47a-5376-807f-9c37f3926c36"
-version = "1.0.3"
 
 [[deps.MIMEs]]
 git-tree-sha1 = "65f28ad4b594aebe22157d6fac869786a255b7eb"
@@ -1038,17 +1001,11 @@ deps = ["Artifacts", "Libdl"]
 uuid = "05823500-19ac-5b8b-9628-191a04bc5112"
 version = "0.8.1+2"
 
-[[deps.OpenSSL]]
-deps = ["BitFlags", "Dates", "MozillaCACerts_jll", "OpenSSL_jll", "Sockets"]
-git-tree-sha1 = "38cb508d080d21dc1128f7fb04f20387ed4c0af4"
-uuid = "4d8831e6-92b7-49fb-bdf8-b643e874388c"
-version = "1.4.3"
-
 [[deps.OpenSSL_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "a028ee3cb5641cccc4c24e90c36b0a4f7707bdf5"
+git-tree-sha1 = "a12e56c72edee3ce6b96667745e6cbbe5498f200"
 uuid = "458c3c95-2e84-50aa-8efc-19380b2a3a95"
-version = "3.0.14+0"
+version = "1.1.23+0"
 
 [[deps.Opus_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -1071,11 +1028,6 @@ deps = ["Dates", "PrecompileTools", "UUIDs"]
 git-tree-sha1 = "8489905bcdbcfac64d1daa51ca07c0d8f0283821"
 uuid = "69de0a69-1ddd-5017-9359-2bf0b02dc9f0"
 version = "2.8.1"
-
-[[deps.Pipe]]
-git-tree-sha1 = "6842804e7867b115ca9de748a0cf6b364523c16d"
-uuid = "b98c9c47-44ae-5843-9183-064241ee97a0"
-version = "1.3.0"
 
 [[deps.Pixman_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "JLLWrappers", "LLVMOpenMP_jll", "Libdl"]
@@ -1101,24 +1053,10 @@ uuid = "995b91a9-d308-5afd-9ec6-746e21dbc043"
 version = "1.4.1"
 
 [[deps.Plots]]
-deps = ["Base64", "Contour", "Dates", "Downloads", "FFMPEG", "FixedPointNumbers", "GR", "JLFzf", "JSON", "LaTeXStrings", "Latexify", "LinearAlgebra", "Measures", "NaNMath", "Pkg", "PlotThemes", "PlotUtils", "PrecompileTools", "Printf", "REPL", "Random", "RecipesBase", "RecipesPipeline", "Reexport", "RelocatableFolders", "Requires", "Scratch", "Showoff", "SparseArrays", "Statistics", "StatsBase", "TOML", "UUIDs", "UnicodeFun", "UnitfulLatexify", "Unzip"]
-git-tree-sha1 = "082f0c4b70c202c37784ce4bfbc33c9f437685bf"
+deps = ["Base64", "Contour", "Dates", "Downloads", "FFMPEG", "FixedPointNumbers", "GR", "GeometryBasics", "JSON", "Latexify", "LinearAlgebra", "Measures", "NaNMath", "Pkg", "PlotThemes", "PlotUtils", "Printf", "REPL", "Random", "RecipesBase", "RecipesPipeline", "Reexport", "Requires", "Scratch", "Showoff", "SparseArrays", "Statistics", "StatsBase", "UUIDs", "UnicodeFun", "Unzip"]
+git-tree-sha1 = "9e42de869561d6bdf8602c57ec557d43538a92f0"
 uuid = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
-version = "1.40.5"
-
-    [deps.Plots.extensions]
-    FileIOExt = "FileIO"
-    GeometryBasicsExt = "GeometryBasics"
-    IJuliaExt = "IJulia"
-    ImageInTerminalExt = "ImageInTerminal"
-    UnitfulExt = "Unitful"
-
-    [deps.Plots.weakdeps]
-    FileIO = "5789e2e9-d7fb-5bc7-8068-2c6fae9b9549"
-    GeometryBasics = "5c1252a2-5f33-56bf-86c9-59e7332b4326"
-    IJulia = "7073ff75-c697-5162-941a-fcdaad2a7d2a"
-    ImageInTerminal = "d8c32880-2388-543b-8c61-d9f865259254"
-    Unitful = "1986cc42-f94f-5a68-af5c-568840ba703d"
+version = "1.29.1"
 
 [[deps.PlutoUI]]
 deps = ["AbstractPlutoDingetjes", "Base64", "ColorTypes", "Dates", "FixedPointNumbers", "Hyperscript", "HypertextLiteral", "IOCapture", "InteractiveUtils", "JSON", "Logging", "MIMEs", "Markdown", "Random", "Reexport", "URIs", "UUIDs"]
@@ -1142,11 +1080,15 @@ version = "1.4.3"
 deps = ["Unicode"]
 uuid = "de0858da-6303-5e67-8744-51eddeeeb8d7"
 
-[[deps.Qt6Base_jll]]
-deps = ["Artifacts", "CompilerSupportLibraries_jll", "Fontconfig_jll", "Glib_jll", "JLLWrappers", "Libdl", "Libglvnd_jll", "OpenSSL_jll", "Vulkan_Loader_jll", "Xorg_libSM_jll", "Xorg_libXext_jll", "Xorg_libXrender_jll", "Xorg_libxcb_jll", "Xorg_xcb_util_cursor_jll", "Xorg_xcb_util_image_jll", "Xorg_xcb_util_keysyms_jll", "Xorg_xcb_util_renderutil_jll", "Xorg_xcb_util_wm_jll", "Zlib_jll", "libinput_jll", "xkbcommon_jll"]
-git-tree-sha1 = "492601870742dcd38f233b23c3ec629628c1d724"
-uuid = "c0090381-4147-56d7-9ebc-da0b1113ec56"
-version = "6.7.1+1"
+[[deps.Profile]]
+deps = ["Printf"]
+uuid = "9abbd945-dff8-562f-b5e8-e1ebf5ef1b79"
+
+[[deps.Qt5Base_jll]]
+deps = ["Artifacts", "CompilerSupportLibraries_jll", "Fontconfig_jll", "Glib_jll", "JLLWrappers", "Libdl", "Libglvnd_jll", "OpenSSL_jll", "Pkg", "Xorg_libXext_jll", "Xorg_libxcb_jll", "Xorg_xcb_util_image_jll", "Xorg_xcb_util_keysyms_jll", "Xorg_xcb_util_renderutil_jll", "Xorg_xcb_util_wm_jll", "Zlib_jll", "xkbcommon_jll"]
+git-tree-sha1 = "0c03844e2231e12fda4d0086fd7cbe4098ee8dc5"
+uuid = "ea2cea3b-5b76-57ae-a6ef-0a8af62496e1"
+version = "5.15.3+2"
 
 [[deps.REPL]]
 deps = ["InteractiveUtils", "Markdown", "Sockets", "Unicode"]
@@ -1163,10 +1105,10 @@ uuid = "3cdcf5f2-1ef4-517c-9805-6587b60abb01"
 version = "1.3.4"
 
 [[deps.RecipesPipeline]]
-deps = ["Dates", "NaNMath", "PlotUtils", "PrecompileTools", "RecipesBase"]
-git-tree-sha1 = "45cf9fd0ca5839d06ef333c8201714e888486342"
+deps = ["Dates", "NaNMath", "PlotUtils", "RecipesBase"]
+git-tree-sha1 = "dc1e451e15d90347a7decc4221842a022b011714"
 uuid = "01d81517-befc-4cb6-b9ec-a95719d0359c"
-version = "0.6.12"
+version = "0.5.2"
 
 [[deps.Reexport]]
 git-tree-sha1 = "45e428421666073eab6f2da5c9d310d99bb12f9b"
@@ -1175,9 +1117,9 @@ version = "1.2.2"
 
 [[deps.RelocatableFolders]]
 deps = ["SHA", "Scratch"]
-git-tree-sha1 = "ffdaf70d81cf6ff22c2b6e733c900c3321cab864"
+git-tree-sha1 = "cdbd3b1338c72ce29d9584fdbe9e9b70eeb5adca"
 uuid = "05181044-ff0b-4ac5-8273-598c1e38db00"
-version = "1.0.1"
+version = "0.1.3"
 
 [[deps.Requires]]
 deps = ["UUIDs"]
@@ -1204,11 +1146,6 @@ git-tree-sha1 = "91eddf657aca81df9ae6ceb20b959ae5653ad1de"
 uuid = "992d4aef-0814-514b-bc4d-f2e9a6c4116f"
 version = "1.0.3"
 
-[[deps.SimpleBufferStream]]
-git-tree-sha1 = "874e8867b33a00e784c8a7e4b60afe9e037b74e1"
-uuid = "777ac1f9-54b0-4bf8-805c-2214025038e7"
-version = "1.1.0"
-
 [[deps.Sockets]]
 uuid = "6462fe0b-24de-5631-8697-dd941f90decc"
 
@@ -1223,6 +1160,25 @@ deps = ["Libdl", "LinearAlgebra", "Random", "Serialization", "SuiteSparse_jll"]
 uuid = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
 version = "1.10.0"
 
+[[deps.StaticArrays]]
+deps = ["LinearAlgebra", "PrecompileTools", "Random", "StaticArraysCore"]
+git-tree-sha1 = "eeafab08ae20c62c44c8399ccb9354a04b80db50"
+uuid = "90137ffa-7385-5640-81b9-e52037218182"
+version = "1.9.7"
+
+    [deps.StaticArrays.extensions]
+    StaticArraysChainRulesCoreExt = "ChainRulesCore"
+    StaticArraysStatisticsExt = "Statistics"
+
+    [deps.StaticArrays.weakdeps]
+    ChainRulesCore = "d360d2e6-b24c-11e9-a2a3-2a2ae2dbcce4"
+    Statistics = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
+
+[[deps.StaticArraysCore]]
+git-tree-sha1 = "192954ef1208c7019899fbf8049e717f92959682"
+uuid = "1e83bf80-4336-4d27-bf5d-d5a4f845583c"
+version = "1.4.3"
+
 [[deps.Statistics]]
 deps = ["LinearAlgebra", "SparseArrays"]
 uuid = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
@@ -1236,9 +1192,27 @@ version = "1.7.0"
 
 [[deps.StatsBase]]
 deps = ["DataAPI", "DataStructures", "LinearAlgebra", "LogExpFunctions", "Missings", "Printf", "Random", "SortingAlgorithms", "SparseArrays", "Statistics", "StatsAPI"]
-git-tree-sha1 = "5cf7606d6cef84b543b483848d4ae08ad9832b21"
+git-tree-sha1 = "d1bf48bfcc554a3761a133fe3a9bb01488e06916"
 uuid = "2913bbd2-ae8a-5f71-8c99-4fb6c76f3a91"
-version = "0.34.3"
+version = "0.33.21"
+
+[[deps.StructArrays]]
+deps = ["ConstructionBase", "DataAPI", "Tables"]
+git-tree-sha1 = "f4dc295e983502292c4c3f951dbb4e985e35b3be"
+uuid = "09ab397b-f2b6-538f-b94a-2f83cf4a842a"
+version = "0.6.18"
+
+    [deps.StructArrays.extensions]
+    StructArraysAdaptExt = "Adapt"
+    StructArraysGPUArraysCoreExt = "GPUArraysCore"
+    StructArraysSparseArraysExt = "SparseArrays"
+    StructArraysStaticArraysExt = "StaticArrays"
+
+    [deps.StructArrays.weakdeps]
+    Adapt = "79e6a3ab-5dfb-504d-930d-738a2a938a0e"
+    GPUArraysCore = "46192b85-c4d5-4398-a991-12ede77f4527"
+    SparseArrays = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+    StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
 
 [[deps.SuiteSparse_jll]]
 deps = ["Artifacts", "Libdl", "libblastrampoline_jll"]
@@ -1249,6 +1223,18 @@ version = "7.2.1+1"
 deps = ["Dates"]
 uuid = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
 version = "1.0.3"
+
+[[deps.TableTraits]]
+deps = ["IteratorInterfaceExtensions"]
+git-tree-sha1 = "c06b2f539df1c6efa794486abfb6ed2022561a39"
+uuid = "3783bdb8-4a98-5b6b-af9a-565f29a5fe9c"
+version = "1.0.1"
+
+[[deps.Tables]]
+deps = ["DataAPI", "DataValueInterfaces", "IteratorInterfaceExtensions", "OrderedCollections", "TableTraits"]
+git-tree-sha1 = "598cd7c1f68d1e205689b1c2fe65a9f85846f297"
+uuid = "bd369af6-aec1-5ad0-b16a-f7cc5008161c"
+version = "1.12.0"
 
 [[deps.Tar]]
 deps = ["ArgTools", "SHA"]
@@ -1264,15 +1250,6 @@ version = "0.1.1"
 [[deps.Test]]
 deps = ["InteractiveUtils", "Logging", "Random", "Serialization"]
 uuid = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
-
-[[deps.TranscodingStreams]]
-git-tree-sha1 = "96612ac5365777520c3c5396314c8cf7408f436a"
-uuid = "3bb67fe8-82b1-5028-8e26-92a6c54297fa"
-version = "0.11.1"
-weakdeps = ["Random", "Test"]
-
-    [deps.TranscodingStreams.extensions]
-    TestExt = ["Test", "Random"]
 
 [[deps.Tricks]]
 git-tree-sha1 = "eae1bb484cd63b36999ee58be2de6c178105112f"
@@ -1297,36 +1274,10 @@ git-tree-sha1 = "53915e50200959667e78a92a418594b428dffddf"
 uuid = "1cfade01-22cf-5700-b092-accc4b62d6e1"
 version = "0.4.1"
 
-[[deps.Unitful]]
-deps = ["Dates", "LinearAlgebra", "Random"]
-git-tree-sha1 = "d95fe458f26209c66a187b1114df96fd70839efd"
-uuid = "1986cc42-f94f-5a68-af5c-568840ba703d"
-version = "1.21.0"
-
-    [deps.Unitful.extensions]
-    ConstructionBaseUnitfulExt = "ConstructionBase"
-    InverseFunctionsUnitfulExt = "InverseFunctions"
-
-    [deps.Unitful.weakdeps]
-    ConstructionBase = "187b0558-2788-49d3-abe0-74a17ed4e7c9"
-    InverseFunctions = "3587e190-3f89-42d0-90ee-14403ec27112"
-
-[[deps.UnitfulLatexify]]
-deps = ["LaTeXStrings", "Latexify", "Unitful"]
-git-tree-sha1 = "975c354fcd5f7e1ddcc1f1a23e6e091d99e99bc8"
-uuid = "45397f5d-5981-4c77-b2b3-fc36d6e9b728"
-version = "1.6.4"
-
 [[deps.Unzip]]
-git-tree-sha1 = "ca0969166a028236229f63514992fc073799bb78"
+git-tree-sha1 = "34db80951901073501137bdbc3d5a8e7bbd06670"
 uuid = "41fe7b60-77ed-43a1-b4f0-825fd5a5650d"
-version = "0.2.0"
-
-[[deps.Vulkan_Loader_jll]]
-deps = ["Artifacts", "JLLWrappers", "Libdl", "Wayland_jll", "Xorg_libX11_jll", "Xorg_libXrandr_jll", "xkbcommon_jll"]
-git-tree-sha1 = "2f0486047a07670caad3a81a075d2e518acc5c59"
-uuid = "a44049a8-05dd-5a78-86c9-5fde0876e88c"
-version = "1.3.243+0"
+version = "0.1.2"
 
 [[deps.Wayland_jll]]
 deps = ["Artifacts", "EpollShim_jll", "Expat_jll", "JLLWrappers", "Libdl", "Libffi_jll", "Pkg", "XML2_jll"]
@@ -1351,24 +1302,6 @@ deps = ["Artifacts", "JLLWrappers", "Libdl", "Libgcrypt_jll", "Libgpg_error_jll"
 git-tree-sha1 = "a54ee957f4c86b526460a720dbc882fa5edcbefc"
 uuid = "aed1982a-8fda-507f-9586-7b0439959a61"
 version = "1.1.41+0"
-
-[[deps.XZ_jll]]
-deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "ac88fb95ae6447c8dda6a5503f3bafd496ae8632"
-uuid = "ffd25f8a-64ca-5728-b0f7-c24cf3aae800"
-version = "5.4.6+0"
-
-[[deps.Xorg_libICE_jll]]
-deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "326b4fea307b0b39892b3e85fa451692eda8d46c"
-uuid = "f67eecfb-183a-506d-b269-f58e52b52d7c"
-version = "1.1.1+0"
-
-[[deps.Xorg_libSM_jll]]
-deps = ["Artifacts", "JLLWrappers", "Libdl", "Xorg_libICE_jll"]
-git-tree-sha1 = "3796722887072218eabafb494a13c963209754ce"
-uuid = "c834827a-8449-5923-a945-d239c165b7dd"
-version = "1.2.4+0"
 
 [[deps.Xorg_libX11_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Xorg_libxcb_jll", "Xorg_xtrans_jll"]
@@ -1448,12 +1381,6 @@ git-tree-sha1 = "730eeca102434283c50ccf7d1ecdadf521a765a4"
 uuid = "cc61e674-0454-545c-8b26-ed2c68acab7a"
 version = "1.1.2+0"
 
-[[deps.Xorg_xcb_util_cursor_jll]]
-deps = ["Artifacts", "JLLWrappers", "Libdl", "Xorg_xcb_util_image_jll", "Xorg_xcb_util_jll", "Xorg_xcb_util_renderutil_jll"]
-git-tree-sha1 = "04341cb870f29dcd5e39055f895c39d016e18ccd"
-uuid = "e920d4aa-a673-5f3a-b3d7-f755a4d47c43"
-version = "0.1.4+0"
-
 [[deps.Xorg_xcb_util_image_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg", "Xorg_xcb_util_jll"]
 git-tree-sha1 = "0fab0a40349ba1cba2c1da699243396ff8e94b97"
@@ -1513,24 +1440,6 @@ git-tree-sha1 = "e678132f07ddb5bfa46857f0d7620fb9be675d3b"
 uuid = "3161d3a3-bdf6-5164-811a-617609db77b4"
 version = "1.5.6+0"
 
-[[deps.eudev_jll]]
-deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg", "gperf_jll"]
-git-tree-sha1 = "431b678a28ebb559d224c0b6b6d01afce87c51ba"
-uuid = "35ca27e7-8b34-5b7f-bca9-bdc33f59eb06"
-version = "3.2.9+0"
-
-[[deps.fzf_jll]]
-deps = ["Artifacts", "JLLWrappers", "Libdl"]
-git-tree-sha1 = "a68c9655fbe6dfcab3d972808f1aafec151ce3f8"
-uuid = "214eeab7-80f7-51ab-84ad-2988db7cef09"
-version = "0.43.0+0"
-
-[[deps.gperf_jll]]
-deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "3516a5630f741c9eecb3720b1ec9d8edc3ecc033"
-uuid = "1a1c6b14-54f6-533d-8383-74cd7377aa70"
-version = "3.1.1+0"
-
 [[deps.libaom_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl"]
 git-tree-sha1 = "1827acba325fdcdf1d2647fc8d5301dd9ba43a9d"
@@ -1548,23 +1457,11 @@ deps = ["Artifacts", "Libdl"]
 uuid = "8e850b90-86db-534c-a0d3-1478176c7d93"
 version = "5.8.0+1"
 
-[[deps.libevdev_jll]]
-deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "141fe65dc3efabb0b1d5ba74e91f6ad26f84cc22"
-uuid = "2db6ffa8-e38f-5e21-84af-90c45d0032cc"
-version = "1.11.0+0"
-
 [[deps.libfdk_aac_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
 git-tree-sha1 = "daacc84a041563f965be61859a36e17c4e4fcd55"
 uuid = "f638f0a6-7fb0-5443-88ba-1cc74229b280"
 version = "2.0.2+0"
-
-[[deps.libinput_jll]]
-deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg", "eudev_jll", "libevdev_jll", "mtdev_jll"]
-git-tree-sha1 = "ad50e5b90f222cfe78aa3d5183a20a12de1322ce"
-uuid = "36db933b-70db-51c0-b978-0f229ee0e533"
-version = "1.18.0+0"
 
 [[deps.libpng_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Zlib_jll"]
@@ -1577,12 +1474,6 @@ deps = ["Artifacts", "JLLWrappers", "Libdl", "Ogg_jll", "Pkg"]
 git-tree-sha1 = "b910cb81ef3fe6e78bf6acee440bda86fd6ae00c"
 uuid = "f27f6e37-5d2b-51aa-960f-b287f2bc3b7a"
 version = "1.3.7+1"
-
-[[deps.mtdev_jll]]
-deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
-git-tree-sha1 = "814e154bdb7be91d78b6802843f76b6ece642f11"
-uuid = "009596ad-96f7-51b1-9f1b-5ce2d5e8a71e"
-version = "1.1.6+0"
 
 [[deps.nghttp2_jll]]
 deps = ["Artifacts", "Libdl"]
@@ -1614,65 +1505,69 @@ version = "1.4.1+1"
 """
 
 # ╔═╡ Cell order:
-# ╟─fb6cdc08-8b44-11eb-09f5-43c167aa53fd
-# ╠═9a0cec14-08db-11eb-3cfa-4d1c327c63f1
-# ╟─6f871ac0-716d-4bf8-a067-c798869c103f
-# ╟─ae243395-521b-4834-b61e-19501e54b41c
-# ╟─8d2858a4-8c38-11eb-0b3b-61a913eed928
-# ╟─e93c5f2f-d7c8-41ea-bdbb-7cf6587b6266
-# ╟─43f5ac88-7d07-429c-b27f-49908c30bdf9
-# ╟─b70465ab-9c7c-4533-9539-b414ef54a892
-# ╠═80c1a728-1784-4bb7-b2c3-e77b41929a78
-# ╟─a25cb8e6-f65d-4061-b90c-079814458c94
-# ╟─4cc483e5-c322-44c8-83f1-802b6cb432aa
-# ╟─3ce501b4-76bc-49ab-b3b8-a41f29dbcc2b
-# ╟─c539e622-d76d-489a-abb9-4ba47dfe9b90
-# ╟─95fe38c5-d717-47d0-8db7-5f8d53a6c6f1
-# ╠═2982c418-dad5-44cc-8194-5b607af84b16
-# ╠═c97964d1-b5d2-4ee7-80cc-995b3f344aa1
-# ╟─ba121b40-2bfc-42d4-81ee-5f90e18ec8de
-# ╟─74892ec6-6639-469d-8711-5039a140d833
-# ╟─fc6899d3-ea18-487a-add1-20be86ce9c74
-# ╟─75a60bcf-3f77-49fb-a7ee-db4580aae6f3
-# ╟─786beb46-d175-44b3-a63e-057150e53c66
-# ╟─2d9f3aad-1d41-4918-a128-47dc58b667e3
-# ╟─17a23094-3975-49f4-8c7f-03fbc8afbbf2
-# ╟─eaf6f4eb-b367-492e-a1be-81f9455252c4
-# ╟─51c226b9-ab3d-46b4-a963-3548ad715d85
-# ╟─6c527098-ab53-4862-bda6-0c11b1564a11
-# ╟─3c2b2f03-522c-40a0-ac1d-8054fe8e3fa2
-# ╟─5cec433e-ee71-44b5-b5d6-3feab80fa535
-# ╟─96b02ce7-ce16-4276-a147-ba94d7a2e160
-# ╠═d952db33-1f82-42f5-96af-8038c256715b
-# ╠═2b9276dc-fcca-4469-a62c-028a9eb3c2a9
-# ╟─754fe8c1-7021-48e8-9523-d5b22d0af93f
-# ╟─ccb35ad7-db20-46fa-abff-a6e88ef999e0
-# ╟─d03d9bfc-20ea-49bc-bc7b-df22cc240ffe
-# ╟─dde3ffc7-b333-4305-b8e7-9888e4512c41
-# ╟─d74bace6-08f4-11eb-2a6b-891e52952f57
-# ╟─76268535-e232-4e02-97cd-cf9b3ddec256
-# ╟─11e24e1d-39db-4b7e-96db-50458def72af
-# ╟─dbdf2812-08f4-11eb-25e7-811522b24627
-# ╟─238f0716-0903-11eb-1595-df71600f5de7
-# ╟─8e771c8a-0903-11eb-1e34-39de4f45412b
-# ╟─fb52c62d-15d3-46a2-8e3d-2de20c68ded4
-# ╟─e83fc5b8-0904-11eb-096b-8da3a1acba12
-# ╟─d1fbea7a-0904-11eb-377d-690d7a16aa7b
-# ╟─dba896a4-0904-11eb-3c47-cbbf6c01e830
-# ╟─cea2dcfb-b1eb-4269-81d7-8596969e9bd6
-# ╟─08d166f1-3af0-45a8-bcad-6ee958497453
-# ╟─72061c66-090d-11eb-14c0-df619958e2b6
-# ╟─c07367be-0987-11eb-0680-0bebd894e1be
-# ╟─f8a28ba0-0915-11eb-12d1-336f291e1d84
-# ╠═442035a6-0915-11eb-21de-e11cf950f230
-# ╠═d994e972-090d-11eb-1b77-6d5ddb5daeab
-# ╠═050bffbc-0915-11eb-2925-ad11b3f67030
-# ╠═1d0baf98-0915-11eb-2f1e-8176d14c06ad
-# ╠═28e1ec24-0915-11eb-228c-4daf9abe189b
-# ╠═349eb1b6-0915-11eb-36e3-1b9459c38a95
-# ╠═39c24ef0-0915-11eb-1a0e-c56f7dd01235
-# ╟─5f5d7332-b5f8-4d05-971b-ec0564f1339b
-# ╟─7cf51986-5983-4094-a18f-f95f2f6993da
-# ╟─763bbb15-c52e-4159-99b7-f3d17f47d56a
+# ╠═97e807b2-9237-11eb-31ef-6fe0d4cc94d3
+# ╠═5f0d7a44-91e0-11eb-10ae-d73156f965e6
+# ╟─9647147a-91ab-11eb-066f-9bc190368fb2
+# ╟─ff1aca1e-91e7-11eb-343e-0f89d9570b06
+# ╟─66a2f510-9232-11eb-3be9-131febc0039f
+# ╟─bd3170e6-91ae-11eb-06f8-ebb6b2e7869f
+# ╟─a304c842-91df-11eb-3fac-6dd63087f6de
+# ╟─798507d6-91db-11eb-2e4a-3ba02f12ba65
+# ╟─3504168a-91de-11eb-181d-1d580d5dc071
+# ╟─4c8d8294-91db-11eb-353d-c3696c615b3d
+# ╟─b62c4af8-9232-11eb-2f66-dd27dcb87d20
+# ╟─905379ce-91ad-11eb-295d-8354ecf5c5b1
+# ╟─5c4f0f26-91ad-11eb-033b-2bd221f0bdba
+# ╟─da98b676-91e0-11eb-0d97-57b8a8aadf2a
+# ╟─e0b607c0-91e0-11eb-10aa-53ec33570e59
+# ╟─fa1635d4-91e3-11eb-31bd-cf61c502ad35
+# ╠═f7f9e4c6-91e3-11eb-1a56-8b98f0b09b46
+# ╠═5da7b076-91b4-11eb-3eba-b3f5849efabb
+# ╟─ea9e77e2-91b1-11eb-185d-cd006db11f60
+# ╟─12b4d528-9239-11eb-2824-8ddb5e2ba892
+# ╠═2f525796-9239-11eb-1865-9b01eadcf548
+# ╠═51abfe6e-9239-11eb-362a-259570250663
+# ╟─b847b5ca-9239-11eb-02fe-db4d9625bc5f
+# ╟─c2deb090-9239-11eb-0739-a74379c15ce6
+# ╠═d420d492-91d9-11eb-056d-33cc8f0aed74
+# ╠═ad2d4dd8-91d5-11eb-27af-6f0c6e61a86a
+# ╠═d0f81f28-91d9-11eb-2e79-61461ef5b132
+# ╠═b8f2c508-91d5-11eb-31b5-61810f171270
+# ╠═3c3971e2-91da-11eb-384c-01c627318bdc
+# ╠═cb0ef266-91d5-11eb-314b-0545c0c817d0
+# ╠═048fac02-91da-11eb-0d26-4f258b4cd043
+# ╠═23b84ce2-91da-11eb-01f8-c308ac4d1c7a
+# ╠═537f952a-91da-11eb-33cf-6be2fd3bc45c
+# ╠═5b972296-91da-11eb-29b1-074f3926181e
+# ╠═3ad5a93c-91db-11eb-3227-c96bf8fd2206
+# ╠═74182fe0-91da-11eb-219a-01f13b86406d
+# ╟─57972a32-91e5-11eb-1d62-fbc22c494db9
+# ╟─63122dd0-91e5-11eb-34c3-b1b5c87809b8
+# ╟─bd013582-91e7-11eb-2d79-e18e45f6d639
+# ╟─c092ab72-91e7-11eb-2bd1-13c8c8bb30e4
+# ╠═cfb0f9ba-91e7-11eb-26b5-5f0f59d03cff
+# ╟─d6edb326-91e7-11eb-03b1-d93e3bc83ca6
+# ╟─4ef42cec-91e8-11eb-2976-0950ffe5de6c
+# ╠═ace8658e-91e8-11eb-0b9d-4b759635e417
+# ╟─b049ff58-91e8-11eb-203b-4f4b5ee5f01f
+# ╠═b6775d3a-91e8-11eb-0187-618cb538d142
+# ╟─8b1441b6-91e4-11eb-16b2-d7eadd3fd69c
+# ╟─d1315f94-91e4-11eb-1076-81156e24d2f1
+# ╟─97c958c2-91eb-11eb-17cb-410acc7f3e49
+# ╠═b7a98dba-91eb-11eb-3c78-074aa835b5fb
+# ╟─f7f17c0c-91eb-11eb-3fa5-3bd90bb7044e
+# ╟─f0aed302-91eb-11eb-13fb-d9418ef327a8
+# ╟─c1062e00-922b-11eb-1f31-ddbd03f8f986
+# ╠═547188ea-9233-11eb-1a89-5ff9468b31f7
+# ╟─2920abfe-91ec-11eb-19bc-935fa1ba0a96
+# ╠═3fadf88c-9236-11eb-19fa-d191ac5a6191
+# ╠═58653a70-9236-11eb-3dae-47adc2a77cb4
+# ╠═5d02f21e-9236-11eb-26ea-6593aa80a2eb
+# ╠═863caf0a-9236-11eb-1013-ab7d83f3fc0c
+# ╟─b803406e-9236-11eb-3aad-056b7f2c9b4b
+# ╠═cc7aaeea-9236-11eb-3fad-2b5ad3962ec1
+# ╠═dabb5766-9236-11eb-3be9-9b33ba5af68a
+# ╠═6cde6ef4-9236-11eb-219a-4d20adaf9988
+# ╠═7e8c1a2a-9236-11eb-20e9-57f6601f5472
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
