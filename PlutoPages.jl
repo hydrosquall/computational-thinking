@@ -653,7 +653,7 @@ reprhtml(x) = repr(MIME"text/html"(), x)
 
 # ╔═╡ 5b325b50-8984-44c6-8677-3c6bc5c2b0b1
 "A magic token that will turn into a relative URL pointing to the website root when used in output."
-const root_url = "++magic#root#url~$(string(rand(UInt128),base=62))++"
+const root_url = "magicrooturl$(string(rand(UInt128),base=62))zzzz"
 
 # ╔═╡ 0d2b7382-2ddf-48c3-90c8-bc22de454c97
 """

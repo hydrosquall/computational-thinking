@@ -317,7 +317,7 @@ A Gaussian random variable is a **continuous** random variable, i.e. it has a co
 
 # ╔═╡ fc0acee6-8ff3-11eb-13d1-1350364f03a9
 md"""
-One way to specify a continous random variable $X$ is via its **probability density function**, or **PDF**, $f_X$. The probability that $X$ lies in the interval $[a, b]$ is given by an area under the curve $f_X(x)$ from $a$ to $b$:
+One way to specify a continuous random variable $X$ is via its **probability density function**, or **PDF**, $f_X$. The probability that $X$ lies in the interval $[a, b]$ is given by an area under the curve $f_X(x)$ from $a$ to $b$:
 
 $$\mathbb{P}(X \in [a, b]) = \int_{a}^b f_X(x) \, dx.$$
 """
