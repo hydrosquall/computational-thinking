@@ -22,6 +22,8 @@ $(
 
 <iframe style="width: 100%; aspect-ratio: 16/9;" src="https://www.youtube.com/embed/OOjKEgbt8AI" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 
+> **Note:** this video was recorded in 2020, so everything looks a bit different, but the steps are the same!
+
 \\
 \\
 \\
@@ -116,15 +118,15 @@ If you want to run a local notebook file that you have not opened before, then y
 ## Step 3: Saving a notebook
 We first need a folder to save our homework in. Open your file explorer and create one. 
 
-Next, we need to know the _absolute path_ of that folder. Here's how you do that in [Windows](https://www.top-password.com/blog/copy-full-path-of-a-folder-file-in-windows/), [MacOS](https://www.josharcher.uk/code/find-path-to-folder-on-mac/) and [Ubuntu]().
+Next, we need to know the _absolute path_ of that folder. Here's how you do that in [Windows](https://www.top-password.com/blog/copy-full-path-of-a-folder-file-in-windows/) and [MacOS](https://www.josharcher.uk/code/find-path-to-folder-on-mac/). In Linux, right click and "Copy file path".
 
 For example, you might have:
 
-- `C:\\Users\\fons\\Documents\\18S191_assignments\\` on Windows
+- `C:\\Users\\fons\\Documents\\18S191_assignments\\` on **Windows**.
 
-- `/Users/fons/Documents/18S191_assignments/` on MacOS
+- `/Users/fons/Documents/18S191_assignments/` on **MacOS**.
 
-- `/home/fons/Documents/18S191_assignments/` on Ubuntu
+- `/home/fons/Documents/18S191_assignments/` on **Ubuntu**.
 
 Now that we know the absolute path, go back to your Pluto notebook, and at the top of the page, click on _"Save notebook..."_. 
 
