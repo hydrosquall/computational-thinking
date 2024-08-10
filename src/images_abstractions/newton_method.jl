@@ -402,7 +402,7 @@ md"""
 """
 
 # ╔═╡ 786f8e78-7c2d-11eb-1bb8-c5cb2e349f45
-expand(ex) = simplify(ex, polynorm=true)
+expand(ex) = simplify(ex; expand=true)
 
 # ╔═╡ 98158a38-7c30-11eb-0796-2335e97ec6d0
 expand( f(z + η) )
