@@ -611,11 +611,11 @@ Try the following:
 # ╔═╡ 24090306-7395-4f2f-af31-34f7486f3945
 hint(md"""Check out this page for a refresher on basic Julia syntax:
 	
-	[Basic Julia Syntax](https://computationalthinking.mit.edu/Spring21/basic_syntax/)""")
+	[Basic Julia Syntax](https://computationalthinking.mit.edu/Fall24/week0/basic_syntax/)""")
 
 # ╔═╡ aa1ff74a-4e78-4ef1-8b8d-3a60a168cf6d
 hint(md"""
-In [Section 1.1](https://computationalthinking.mit.edu/Spring21/week1/), we drew a red square on top of the image Philip with a simple command...
+In [Section 1.1](https://computationalthinking.mit.edu/Fall24/images_abstractions/images/), we drew a red square on top of the image Philip with a simple command...
 """)
 
 # ╔═╡ 50e2b0fb-b06d-4ac1-bdfb-eab833466736
