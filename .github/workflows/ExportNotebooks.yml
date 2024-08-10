@@ -43,9 +43,10 @@ jobs:
                   ref: Fall23-output
 
             - name: 🪴 Generate site
-              run: julia --project=pluto-deployment-environment -e '
-                  import Pkg;
-                  Pkg.instantiate();
+              run: |
+                julia --project=pluto-deployment-environment -e '
+                  import Pkg
+                  Pkg.instantiate()
 
                   include("./generate.jl")'
 
