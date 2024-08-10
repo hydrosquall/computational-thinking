@@ -1,0 +1,15 @@
+{
+    "comment_to_website_maintainers": "README! hello! this file is for a special purpose: some of the notebooks from this repository are also featured Pluto notebooks (they show in the main menu of Pluto, see https://github.com/fonsp/Pluto.jl/pull/2927). More specifically, the site computational-thinking.mit.edu acts as a 'featured source' of pluto, search for plutojl.org in https://github.com/fonsp/Pluto.jl/blob/main/frontend/featured_sources.js . That means: this file does not configure this website, changing things here does not change the website.",
+    
+    "title": "Computational Thinking highlights",
+    "description": "Highlights for the class Computational Thinking at MIT. For the complete course material, check out computationalthinking.mit.edu",
+    
+    "collections": [
+        {
+            "title": "Julia track",
+            "description": "These lectures are from the \"Julia track\" of Computational Thinking. Check out computationalthinking.mit.edu for the other tracks: Mathematics, Climate science and Data science.",
+            "tags": ["track_julia"]
+        }
+    ]
+    
+}
