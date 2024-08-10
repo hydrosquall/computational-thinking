@@ -47,8 +47,11 @@ jobs:
                 julia --project=pluto-deployment-environment -e '
                   import Pkg
                   Pkg.instantiate()
-
-                  include("./generate.jl")'
+                  import PlutoPages
+                  
+                  PlutoPages.generate("."; html_report_path="generation_report.html")
+                  
+                  cp("./netlify.toml", "./_site/netlify.toml")'
 
             
             - name: 📰 Upload site generation report
