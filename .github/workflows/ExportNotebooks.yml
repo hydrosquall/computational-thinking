@@ -67,7 +67,7 @@ jobs:
                 mv extra_outputs/* www
 
             - name: 🚀 Deploy to GitHub Pages
-              uses: JamesIves/github-pages-deploy-action@4
+              uses: JamesIves/github-pages-deploy-action@v4
               with:
                   token: ${{ secrets.GITHUB_TOKEN }}
                   branch: Fall24-output
