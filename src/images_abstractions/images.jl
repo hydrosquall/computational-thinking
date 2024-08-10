@@ -47,7 +47,7 @@ _When running this notebook for the first time, this could take up to 15 minutes
 # ╔═╡ ca1b507e-6017-11eb-34e6-6b85cd189002
 md"""
 # Images as examples of data  all around us
-Welcome to the Computational Thinking using Julia for Real-World Problems, at MIT in Spring 2021!
+Welcome to the Computational Thinking using Julia for Real-World Problems, at MIT in Fall 2024!
 
 The aim of this course is to bring together concepts from computer science and applied math with coding in the modern **Julia language**, and to see how to apply these techniques to study interesting applications (and of course to have fun).
 
